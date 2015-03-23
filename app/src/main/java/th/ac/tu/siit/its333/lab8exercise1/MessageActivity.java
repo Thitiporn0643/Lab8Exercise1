@@ -71,6 +71,15 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
 
     @Override
     public void run() {
+
+        Toast t = Toast.makeText(this.getApplicationContext(),
+                "Updated the timeline", Toast.LENGTH_SHORT);
+        t.show();
+
+        LoadMessageTask task = new LoadMessageTask();
+        task.execute();
+
+        handler.postDelayed(this, 30000);
     }
 
     @Override
@@ -106,6 +115,13 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
 
+            handler.removeCallbacks(this);
+
+            LoadMessageTask task = new LoadMessageTask();
+            task.execute();
+
+            handler.postDelayed(this,30000);
+
             return true;
         }
 
@@ -113,6 +129,8 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
     }
 
     class LoadMessageTask extends AsyncTask<String, Void, Boolean> {
+        String uu;
+        String m;
 
         @Override
         protected Boolean doInBackground(String... params) {
@@ -132,7 +150,7 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
                 int response = h.getResponseCode();
                 if (response == 200) {
                     reader = new BufferedReader(new InputStreamReader(h.getInputStream()));
-                    while((line = reader.readLine()) != null) {
+                    while ((line = reader.readLine()) != null) {
                         buffer.append(line);
                     }
 
@@ -140,13 +158,22 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
                     //Parsing JSON and displaying messages
 
                     //To append a new message:
-                    //Map<String, String> item = new HashMap<String, String>();
-                    //item.put("user", u);
-                    //item.put("message", m);
-                    //data.add(0, item);
-                    JSONObject json = new JSONObject(buffer.toString());
 
+                    JSONObject json = new JSONObject(buffer.toString());
+                    JSONArray jmessage = json.getJSONArray("msg");
+                    for (int i = 0; i < jmessage.length(); i++) {
+                        JSONObject msg = jmessage.getJSONObject(i);
+                        uu = msg.getString("user");
+                        m = msg.getString("message");
+                        timestamp = msg.getInt("time");
+                        Map<String, String> item = new HashMap<String, String>();
+                        item.put("user", uu);
+                        item.put("message", m);
+                        data.add(i, item);
+                    }
                 }
+                return true;
+
             } catch (MalformedURLException e) {
                 Log.e("LoadMessageTask", "Invalid URL");
             } catch (IOException e) {
@@ -180,6 +207,28 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
             String message = params[1];
             HttpClient h = new DefaultHttpClient();
             HttpPost p = new HttpPost("http://ict.siit.tu.ac.th/~cholwich/microblog/post.php");
+
+            List<NameValuePair> values = new ArrayList<NameValuePair>();
+            values.add(new BasicNameValuePair("user", user));
+            values.add(new BasicNameValuePair("message", message));
+            try {
+                p.setEntity(new UrlEncodedFormEntity(values));
+                HttpResponse response = h.execute(p);
+                BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(response.getEntity().getContent()));
+                while((line = reader.readLine()) != null) {
+                    buffer.append(line);
+
+                }
+
+                return true;
+            } catch (UnsupportedEncodingException e) {
+                Log.e("Error", "Invalid encoding");
+            } catch (ClientProtocolException e) {
+                Log.e("Error", "Error in posting a message");
+            } catch (IOException e) {
+                Log.e("Error", "I/O Exception");
+            }
 
 
 
