@@ -72,9 +72,6 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
     @Override
     public void run() {
 
-        Toast t = Toast.makeText(this.getApplicationContext(),
-                "Updated the timeline", Toast.LENGTH_SHORT);
-        t.show();
 
         LoadMessageTask task = new LoadMessageTask();
         task.execute();
@@ -129,7 +126,7 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
     }
 
     class LoadMessageTask extends AsyncTask<String, Void, Boolean> {
-        String uu;
+        String us;
         String m;
 
         @Override
@@ -163,13 +160,13 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
                     JSONArray jmessage = json.getJSONArray("msg");
                     for (int i = 0; i < jmessage.length(); i++) {
                         JSONObject msg = jmessage.getJSONObject(i);
-                        uu = msg.getString("user");
+                        us = msg.getString("user");
                         m = msg.getString("message");
                         timestamp = msg.getInt("time");
                         Map<String, String> item = new HashMap<String, String>();
-                        item.put("user", uu);
+                        item.put("user", us);
                         item.put("message", m);
-                        data.add(i, item);
+                        data.add(0, item);
                     }
                 }
                 return true;
@@ -242,6 +239,10 @@ public class MessageActivity extends ActionBarActivity implements Runnable {
                         "Successfully post your status",
                         Toast.LENGTH_SHORT);
                 t.show();
+
+                LoadMessageTask task = new LoadMessageTask();
+                task.execute();
+
             }
             else {
                 Toast t = Toast.makeText(MessageActivity.this.getApplicationContext(),
